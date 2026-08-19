@@ -1,0 +1,33 @@
+<ui:UiPage x:Class="ShadowStrap.UI.Elements.SettingsPages.MacrosPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      Title="ShadowStrap Macros">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <ui:CardControl Header="Create New Macro" Icon="Add24" Background="#0e1018">
+            <ui:Button Content="Click to Bind &amp; Record" Appearance="Primary" />
+        </ui:CardControl>
+
+        <ScrollViewer Grid.Row="1" Margin="0,20,0,0">
+            <StackPanel>
+                <ui:TextBlock Text="Active Macros" FontTypography="Subtitle" Margin="0,0,0,10"/>
+                <!-- Пример списка макросов -->
+                <ui:Card Margin="0,5">
+                    <DockPanel>
+                        <ui:SymbolIcon Symbol="Play24" DockPanel.Dock="Left" Margin="0,0,10,0"/>
+                        <StackPanel>
+                            <ui:TextBlock Text="Roblox BunnyHop" FontWeight="Bold"/>
+                            <ui:TextBlock Text="Bind: F3 | Cycle: Yes" Foreground="#272d3c"/>
+                        </StackPanel>
+                        <ui:Button Content="Edit" HorizontalAlignment="Right" />
+                    </DockPanel>
+                </ui:Card>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</ui:UiPage>

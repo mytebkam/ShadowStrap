@@ -1,0 +1,32 @@
+# ShadowStrap VPN & Licensing Documentation
+
+## 1. Overview
+ShadowStrap uses a C# wrapper for sing-box.exe with split-tunneling and a subscription-based licensing model.
+
+## 2. Security & Crypto
+- Files: `Utilities/Security/CryptoService.cs`
+- Encryption: AES-256 (CBC Mode).
+- Current Static Key: "ShadowStrapGuardKey2024!" (24 bytes).
+- Current Static IV: "ShadowStrap_IV_!" (16 bytes).
+- Logic: The VPN config is fetched as encrypted text from the API, stored locally as `core_v1.dat`, and decrypted in-memory only during launch.
+
+## 3. Licensing System (API Requirements)
+- Endpoint: `https://your-api.com/v1/license/validate`
+- Method: GET
+- Header: `Authorization: Bearer <USER_KEY>`
+- Server-side Logic needed:
+    1. Check if `<USER_KEY>` exists in DB.
+    2. Compare `Request.UserIP` with the IP bound to the key.
+    3. Return the encrypted sing-box JSON config if valid.
+
+## 4. Dependencies
+- Core: `sing-box.exe` (v1.8.0).
+- Fallback: Uses `ghproxy.com` mirror if GitHub is unreachable.
+- Location: `%AppData%/ShadowStrap/sing-box.exe`.
+
+## 5. Macro System
+- Handler: `Integrations/Macros/MacroHandler.cs`.
+- Function: Loop-based key simulation (requires WinAPI SendInput implementation for hardware-level bypass).
+
+## 6. Logging
+- Path: `%AppData%/ShadowStrap/debug_log.txt`.
