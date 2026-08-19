@@ -1,32 +1,53 @@
-# ShadowStrap VPN & Licensing Documentation
+# REMOVED: Secrets redacted
 
-## 1. Overview
-ShadowStrap uses a C# wrapper for sing-box.exe with split-tunneling and a subscription-based licensing model.
+This file previously contained static encryption keys and initialization vectors (IVs) and other sensitive implementation details. Those secrets have been removed from the repository and replaced with this notice.
 
-## 2. Security & Crypto
-- Files: `Utilities/Security/CryptoService.cs`
-- Encryption: AES-256 (CBC Mode).
-- Current Static Key: "ShadowStrapGuardKey2024!" (24 bytes).
-- Current Static IV: "ShadowStrap_IV_!" (16 bytes).
-- Logic: The VPN config is fetched as encrypted text from the API, stored locally as `core_v1.dat`, and decrypted in-memory only during launch.
+If you cloned or forked the repository before this change, you MUST rotate any keys/secrets that were derived from or dependent on the values that were previously stored here.
 
-## 3. Licensing System (API Requirements)
-- Endpoint: `https://your-api.com/v1/license/validate`
-- Method: GET
-- Header: `Authorization: Bearer <USER_KEY>`
-- Server-side Logic needed:
-    1. Check if `<USER_KEY>` exists in DB.
-    2. Compare `Request.UserIP` with the IP bound to the key.
-    3. Return the encrypted sing-box JSON config if valid.
+Immediate steps you (or your ops team) should take now:
 
-## 4. Dependencies
-- Core: `sing-box.exe` (v1.8.0).
-- Fallback: Uses `ghproxy.com` mirror if GitHub is unreachable.
-- Location: `%AppData%/ShadowStrap/sing-box.exe`.
+1) Rotate secrets
+   - Invalidate any keys that were published in the repo.
+   - Generate new secrets using a cryptographically secure random generator (for AES-256 use a 32-byte key).
+   - Store new secrets in a secure secret store (e.g., GitHub Secrets, Azure Key Vault, HashiCorp Vault). Never store production keys in plaintext in the repository.
 
-## 5. Macro System
-- Handler: `Integrations/Macros/MacroHandler.cs`.
-- Function: Loop-based key simulation (requires WinAPI SendInput implementation for hardware-level bypass).
+2) Move secret retrieval to a secure backend
+   - Do not hard-code keys or IVs. The client should request vault-provided secrets during runtime (authentication) or derive them using secure key exchange.
 
-## 6. Logging
-- Path: `%AppData%/ShadowStrap/debug_log.txt`.
+3) Use modern authenticated encryption
+   - Prefer AEAD (for example AES-GCM) instead of unauthenticated CBC.
+   - Use a unique random nonce/IV per encryption operation. Do not reuse IVs.
+
+4) Remove secret from git history (if you want to fully purge)
+   - Choose one of the following approaches; **this rewrites history** and requires coordination with collaborators.
+
+   Option A: BFG (simpler)
+     - Install BFG: https://rtyley.github.io/bfg-repo-cleaner/
+     - Mirror clone the repo:
+       git clone --mirror https://github.com/mytebkam/ShadowStrap.git
+     - Remove the file from history:
+       bfg --delete-files KeysVpn.txt ShadowStrap/KeysVpn.txt
+     - Cleanup and push:
+       cd ShadowStrap.git
+       git reflog expire --expire=now --all && git gc --prune=now --aggressive
+       git push --force
+
+   Option B: git filter-repo (recommended)
+     - Install git-filter-repo: https://github.com/newren/git-filter-repo
+     - Run (from local repo clone):
+       git filter-repo --path KeysVpn.txt --path ShadowStrap/KeysVpn.txt --invert-paths
+     - Force-push the rewritten history.
+
+5) Update CI and releases
+   - Remove any CI secrets from logs, re-run builds if necessary.
+   - Re-upload signed artifacts if signing keys were compromised.
+
+6) Audit
+   - Run a secrets scan (truffleHog, git-secrets, Gitleaks) across the repo to ensure no other secrets remain.
+
+If you want, I can:
+- Create a commit replacing both KeysVpn.txt files with this notice (already preparing to do so).
+- Prepare a step-by-step script for the history rewrite (BFG or git-filter-repo) that you can run or I can prepare as a PR.
+- Rotate any references in code that assume a static key (I can propose code changes to load secrets from environment / secure store and switch to AES-GCM).
+
+DO NOT share the old keys with anyone. After I apply this change, please coordinate the history purge and key rotation as soon as possible.
